@@ -41,24 +41,49 @@ app.post('/api/array', (req,res)=> {
   res.send(array1);
 });
 
-//PUT
+//PUT - may have error occur I don't know how to  fix it T.T
 app.put('/api/array/:id', (req,res)=> {
     let id = req.params.id;
+    let Title = req.body.title;
+    let Description = req.body.description;
     let index = -1;
     for (let box of array1){
         if (box.id === parseInt(id)){
-            index = user.id -1;
+            index = box.id -1;
         }
     }
 
     if (index >=0){
         let box = array1[index];
-        console.log(box);
+        array1.title = Title;
+        array1.description = Description;
+        res.send(box);
     }else{
         res.status(404)
         res.send({error:"id is not correct"})
     }
 });
+
+//DELETE - may have error occur I don't know how to  fix it T.T
+app.delete('/api/array/:id', (req,res)=> {
+    let id = req.params.id;
+    let index = -1;
+    for (let box of array1){
+        if (box.id === parseInt(id)){
+            index = box.id -1;
+        }
+    }
+
+    if (index >=0){
+        let box = array1[index];
+        array1.splice(index,1);
+        res.send(box);
+    }else{
+        res.status(404)
+        res.send({error:"id is not correct"})
+    }
+});
+
 
 //Server start
 app.listen(port, () => {
