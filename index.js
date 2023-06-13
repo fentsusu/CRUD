@@ -1,91 +1,70 @@
 const express = require('express');
-const fs = require('fs');
+const bodyParser = require('body-parser');
 const app = express();
-const port = 3000;
-const file = 'file.json';
+const fs = require('fs');
 
-app.use(express.json());
-app.use(express.urlencoded());
+const storage_path = './file_storage';
+let file_list = fs.readdirSync(storage_path);
+
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: true }));
 
 app.get('/', (req, res) => {
-    res.send('Create Read Update Delete');
+    res.status(200).send("Welcome!");
 });
 
-let array1 = [
-    {id:1, title:"Title1", description:"This is description of title1"},
-    {id:2, title:"Title2", description:"This is description of title2"},
-    {id:3, title:"Title3", description:"This is description of title3"},
-]; 
- //GET
-app.get('/api/array', (req,res)=> {
-    res.send(array1);
-});
-
-//POST
-app.post('/api/array', (req,res)=> {
-    if(!req.body.title){
-        res.status(400);
-        res.send({error: "title required <3"})
+app.get('/:route_name', (req, res) => {
+    const { route_name } = req.params;
+    if (file_list.includes(route_name)) {
+        const file = JSON.parse(fs.readFileSync("./file_storage/" + route_name));
+        res.status(200).send(file);
+    } else {
+        res.status(404).send("File is not found!");
     }
-    if(!req.body.description){
-        res.status(400);
-        return res.send({error: "description required <3"})
-    }
-  console.log(req.body);
-  let box = {
-    id: array1.length + 1,
-    title: req.body.title,
-    description: req.body.description
-  }
-  array1.push(box);
-  res.send(array1);
 });
 
-//PUT - may have error occur I don't know how to  fix it T.T
-app.put('/api/array/:id', (req,res)=> {
-    let id = req.params.id;
-    let Title = req.body.title;
-    let Description = req.body.description;
-    let index = -1;
-    for (let box of array1){
-        if (box.id === parseInt(id)){
-            index = box.id -1;
+app.post('/:route_name', (req, res) => {
+    const file_name = req.params['route_name'];
+    if (file_name.endsWith(".json")) {
+        if (file_list.includes(file_name)) {
+            res.status(403).send("File is already existed");
+        } else {
+            fs.writeFileSync("./file_storage/" + file_name, JSON.stringify(req.body));
+            file_list = fs.readdirSync(storage_path);
+            res.status(200).send("Store file " + file_name + " successfully.");
         }
-    }
-
-    if (index >=0){
-        let box = array1[index];
-        array1.title = Title;
-        array1.description = Description;
-        res.send(box);
-    }else{
-        res.status(404)
-        res.send({error:"id is not correct"})
+    } else {
+        res.status(400).send("Please submit only json file");
     }
 });
 
-//DELETE - may have error occur I don't know how to  fix it T.T
-app.delete('/api/array/:id', (req,res)=> {
-    let id = req.params.id;
-    let index = -1;
-    for (let box of array1){
-        if (box.id === parseInt(id)){
-            index = box.id -1;
+app.put('/:route_name', (req, res) => {
+    const file_name = req.params['route_name'];
+    if (file_name.endsWith(".json")) {
+        if (file_list.includes(file_name)) {
+            fs.writeFileSync("./file_storage/" + file_name, JSON.stringify(req.body));
+            file_list = fs.readdirSync(storage_path);
+            res.status(200).send("Replace " + file_name + " successfully.");
+        } else {
+            res.status(404).send("File is not existed");
         }
-    }
-
-    if (index >=0){
-        let box = array1[index];
-        array1.splice(index,1);
-        res.send(box);
-    }else{
-        res.status(404)
-        res.send({error:"id is not correct"})
+    } else {
+        res.status(400).send("Please submit only json file");
     }
 });
 
-
-//Server start
-app.listen(port, () => {
-    console.log(`Listening at http://localhost:${port}`);
+app.delete('/:route_name', (req, res) => {
+    const file_name = req.params['route_name'];
+    if (file_name.endsWith(".json")) {
+        if (file_list.includes(file_name)) {
+            fs.unlinkSync("./file_storage/" + file_name);
+            res.status(200).send("Remove " + file_name + " successfully.");
+        } else {
+            res.status(404).send("File is not existed");
+        }
+    } else {
+        res.status(400).send("Please submit only json file");
+    }
 });
+
+app.listen(3000);
